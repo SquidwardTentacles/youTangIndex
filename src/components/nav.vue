@@ -94,7 +94,7 @@
     <div class="width chooseContent flexbox">
       <ul class="flexbox j-start">
         <li v-for="(item, index) in listData"
-            @mouseenter="contentId=index"
+            @mouseenter="contentId=index,ifautoplay='autoplay'"
             @mouseleave="contentId=-1"
             :key="index">
           <div class="widthbox">
@@ -113,7 +113,7 @@
 
             <div class="videoBox"
                  v-show="uncontentCompuate(index)">
-              <video :src="item.low_video_url"
+              <video :src="item.low_video_url"  muted="muted"
                      autoplay="autoplay"></video>
               <div class="title">
                 <P>使用</P>
@@ -150,7 +150,9 @@ export default {
       listData: [],
       contentId: -1,
       requestCount: 0,
-      scrollSave: 0
+      scrollSave: 0,
+      ifautoplay:false,
+       height:window.innerHeight
     }
   },
   mounted () {
@@ -173,26 +175,43 @@ export default {
   },
   methods: {
     handleScroll (e) {
-      var scrollTop = e.target.documentElement.scrollTop || e.target.body.scrollTop;
-      let scroll = scrollTop - this.scrollSave;
-      this.scrollSave = scrollTop
-      // if (scroll > 0) {
-      //   console.log('top');
-      //   this.requestCount++
-      //   this              .initData(this.requestCount)
+       let _this = this;
 
-      // }
-      console.log(window.innerHeight);
+          //变量scrollTop是滚动条滚动时，距离顶部的距离
+          var scrollTop =
+            document.documentElement.scrollTop || document.body.scrollTop; //变量windowHeight是可视区的高度
+          var windowHeight =
+            document.documentElement.clientHeight || document.body.clientHeight; //变量scrollHeight是滚动条的总高度
+          var scrollHeight =
+            document.documentElement.scrollHeight || document.body.scrollHeight; //滚动条到底部的条件
+          let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight; //浏览器高度
+          console.log(h)
+          if (scrollTop + windowHeight == scrollHeight) {
 
-      // if (scrollTop >= 200) {
-      // }
+            console.log(
+              "距顶部" +
+              scrollTop +
+              "可视区高度" +
+              windowHeight +
+              "滚动条总高度" +
+              scrollHeight
+            );
+            this.requestCount++
+        this.initData(this.requestCount)
+          }
     },
     initData (i) {
       this.requestCount = i
-      this.axios.get(`/api/themes?language=zh&&page=${this.requestCount}`).then(res => {
+      this.axios.get(`https://lightmvapi.aoscdn.com/api/themes?language=zh&&page=${this.requestCount}`).then(res => {
         let rback = res.data
         if (rback.status === '1') {
           this.listData = this.listData.concat(rback.data.list)
+          console.log(rback);
+          
+          this.axios.post('http://192.168.106:3100/saveData',rback.data).then (res=>{
+            console.log(res);
+            
+          })
         } else {
           this.$message.error('请求失败')
         }
